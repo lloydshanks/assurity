@@ -15,15 +15,27 @@ def main():
 
     credentials_file = open('./Config/credentials.conf')
     credentials = json.load(credentials_file)
-    pprint(credentials)
     credentials_file.close()
+    pprint(credentials)
+
+    settings_file = open('./Config/settings.conf')
+    settings = json.load(settings_file)
+    settings_file.close()
+    pprint(settings)
 
     # create regular expression for date
     p = re.compile('\d\d\d\d_\d\d_\d\d')
 
+    get_backup_keys(settings, credentials)
+
+
+def get_backup_keys(settings, credentials):
+        # create regular expression for date
+    p = re.compile('\d\d\d\d_\d\d_\d\d')
+
     print 'Connecting to S3...'
     conn = S3Connection(credentials['aws_access_key_id'], credentials['aws_secret_access_key'])
-    s3_backups = conn.get_bucket('mecca-database-backup')
+    s3_backups = conn.get_bucket(settings['s3_bucket'])
     for backup_key in s3_backups.list():
         m = p.search(str(backup_key))
         if m:
@@ -35,16 +47,10 @@ def main():
             year = int(str(backup_key)[m.start():m.end()][0:4])
             month = int(str(backup_key)[m.start():m.end()][5:7])
             day = int(str(backup_key)[m.start():m.end()][8:10])
+            # what day of the week is it
             print calendar.weekday(year, month, day)
+            # find the last day of the month
             print calendar.monthrange(year, month)[1]
-
-
-    # this gives array of week, 0 = Monday
-    # print calendar.weekday(2014, 04, 02)
-
-    # this gives the last day of the month
-    # print calendar.monthrange(2013, 04)[1]
-
 
 
 def upload_file():
