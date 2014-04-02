@@ -1,0 +1,23 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0" is_locked="false">
+    <option name="myName" value="Project Default" />
+    <option name="myLocal" value="false" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <value>
+          <list size="9">
+            <item index="0" class="java.lang.String" itemvalue="lxml.etree.tostring" />
+            <item index="1" class="java.lang.String" itemvalue="lxml.etree.SubElement" />
+            <item index="2" class="java.lang.String" itemvalue="lxml.etree.Element" />
+            <item index="3" class="java.lang.String" itemvalue="int.in_" />
+            <item index="4" class="java.lang.String" itemvalue="integrate_functions.integrate_classes" />
+            <item index="5" class="java.lang.String" itemvalue="integrate_classes.AutoVivification.iteritems" />
+            <item index="6" class="java.lang.String" itemvalue="lxml.etree.parse" />
+            <item index="7" class="java.lang.String" itemvalue="pyodbc" />
+            <item index="8" class="java.lang.String" itemvalue="urllib.quote_plus" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
