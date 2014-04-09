@@ -1,3 +1,5 @@
 {
-    "s3_bucket": "new-bucket"
+    "backup_directory": "/backup_directory_local/",
+    "s3_bucket": "new-bucket",
+    "s3_path": "/backup_directory_remote/"
 }
