@@ -1,3 +1,3 @@
-progressbar
+progress
 boto
 filechunkio

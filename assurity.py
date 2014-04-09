@@ -5,17 +5,18 @@ import calendar
 import re
 import os
 import math
+import sys
 
 from pprint import pprint
 from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 from boto.s3.key import Key
 from filechunkio import FileChunkIO
-from progressbar import *
+from progress.bar import Bar
+from multiprocessing import Pool
 
 
 def main():
-
     credentials_file = open('./Config/credentials.conf')
     credentials = json.load(credentials_file)
     credentials_file.close()
@@ -25,6 +26,14 @@ def main():
     settings = json.load(settings_file)
     settings_file.close()
     #pprint(settings)
+
+    #clean up multipart uploads (temporary)
+    conn = S3Connection(credentials['aws_access_key_id'], credentials['aws_secret_access_key'])
+    # test for exception
+    s3_backups = conn.get_bucket(settings['s3_bucket'])
+    for mpu in s3_backups.get_all_multipart_uploads():
+        mpu.cancel_upload()
+        print 'cancelled'
 
     local_files = get_local_files(settings)
     #pprint(local_files)
@@ -36,9 +45,16 @@ def main():
             upload_file(filename, details, settings, credentials)
 
 
-def restart_line():
-    sys.stdout.write('\r')
-    sys.stdout.flush()
+def progress_line(filename, current, total):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    percent_done = float(current) / float(total)
+    sys.stdout.write(filename + ': ')
+    sys.stdout.write('[')
+    for i in range(int(math.floor(percent_done * 20))):
+        sys.stdout.write('#')
+    for i in range(int(math.ceil((1 - percent_done) * 20))):
+        sys.stdout.write(' ')
+    sys.stdout.write('] ' + str(percent_done * 100) + '%')
 
 
 def get_local_files(settings):
@@ -74,16 +90,28 @@ def get_remote_files(settings, credentials):
             remote_files[filename]['day'] = int(str(backup_key)[m.start():m.end()][8:10])
     return remote_files
 
+
+def upload_part(settings, credentials, multipart_id, part_id, filename, offset, bytes, num_chunks):
+    #print 'Part upload...'
+    conn = S3Connection(credentials['aws_access_key_id'], credentials['aws_secret_access_key'])
+    s3_backups = conn.get_bucket(settings['s3_bucket'])
+    for mp in s3_backups.get_all_multipart_uploads():
+        #print mp.id
+        #print multipart_id
+        if mp.id == multipart_id:
+            #print 'start upload...' + str(part_id)
+            fp = FileChunkIO(filename, 'r', offset=offset, bytes=bytes)
+            mp.upload_part_from_file(fp, part_id)
+            fp.close()
+            progress_line(filename, part_id, num_chunks)
+
+
 def upload_file(name, details, settings, credentials):
     conn = S3Connection(credentials['aws_access_key_id'], credentials['aws_secret_access_key'])
     # test for exception
     s3_backups = conn.get_bucket(settings['s3_bucket'])
+
     k = Key(s3_backups)
-
-    # set up progress bar
-    widgets = [name, ': ', Percentage(), ' ', Bar(marker='*', left='[', right=']'),
-               ' ', ETA(), ' ', FileTransferSpeed()]
-
 
     if calendar.monthrange(details['year'], details['month'])[1] == details['day']:
         k.key = settings['s3_path'] + '/monthly/' + name
@@ -98,27 +126,28 @@ def upload_file(name, details, settings, credentials):
     mp = s3_backups.initiate_multipart_upload(k.key)
 
     size = os.stat(filename).st_size
-    chunk_size = max(int(math.ceil(size/10000)), 10240)
-    num_chunks = int(math.ceil(size / float(chunk_size)))
+    print size
+    chunk_size = max(int(math.ceil(size / 9999)), 10240)
+    print chunk_size
+    num_chunks = max(int(math.ceil(size / float(chunk_size))), 1)
+    print num_chunks
 
-    pbar = ProgressBar(widgets=widgets, maxval=num_chunks)
-    pbar.start()
+    #offset = 0
+    #part_id = 1
+    pool = Pool(processes=10)
+    for chunk in range(num_chunks):
+        offset = chunk * chunk_size
+        remaining_bytes = size - offset
+        part_id = chunk + 1
+        num_bytes = min([chunk_size, remaining_bytes])
+        pool.apply_async(upload_part, [settings, credentials, mp.id, part_id, filename, offset, num_bytes, num_chunks])
+    pool.close()
+    pool.join()
 
-    offset = 0
-    part_id = 1
-    while (offset <= size):
-        restart_line()
-
-        fp = FileChunkIO(filename, 'r', offset=offset, bytes=chunk_size)
-
-        mp.upload_part_from_file(fp, part_id)
-
-        pbar.update(part_id)
-        part_id = part_id+1
-        offset = offset + chunk_size + 1
-        fp.close()
-    mp.complete_upload()
-    pbar.finish()
+    if len(mp.get_all_parts()) == num_chunks:
+        mp.complete_upload()
+    else:
+        mp.cancel_upload()
 
 
 if __name__ == '__main__':
