@@ -7,12 +7,10 @@ import os
 import math
 import sys
 
-from pprint import pprint
 from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 from boto.s3.key import Key
 from filechunkio import FileChunkIO
-from progress.bar import Bar
 from multiprocessing import Pool
 
 
@@ -20,12 +18,10 @@ def main():
     credentials_file = open('./Config/credentials.conf')
     credentials = json.load(credentials_file)
     credentials_file.close()
-    #pprint(credentials)
 
     settings_file = open('./Config/settings.conf')
     settings = json.load(settings_file)
     settings_file.close()
-    #pprint(settings)
 
     #clean up multipart uploads (temporary)
     conn = S3Connection(credentials['aws_access_key_id'], credentials['aws_secret_access_key'])
@@ -36,12 +32,9 @@ def main():
         print 'cancelled'
 
     local_files = get_local_files(settings)
-    #pprint(local_files)
     remote_files = get_remote_files(settings, credentials)
-    #pprint(remote_files)
     for filename, details in local_files.items():
         if filename not in remote_files:
-            #print filename
             upload_file(filename, details, settings, credentials)
 
 
@@ -92,14 +85,10 @@ def get_remote_files(settings, credentials):
 
 
 def upload_part(settings, credentials, multipart_id, part_id, filename, offset, bytes, num_chunks):
-    #print 'Part upload...'
     conn = S3Connection(credentials['aws_access_key_id'], credentials['aws_secret_access_key'])
     s3_backups = conn.get_bucket(settings['s3_bucket'])
     for mp in s3_backups.get_all_multipart_uploads():
-        #print mp.id
-        #print multipart_id
         if mp.id == multipart_id:
-            #print 'start upload...' + str(part_id)
             fp = FileChunkIO(filename, 'r', offset=offset, bytes=bytes)
             mp.upload_part_from_file(fp, part_id)
             fp.close()
@@ -132,8 +121,6 @@ def upload_file(name, details, settings, credentials):
     num_chunks = max(int(math.ceil(size / float(chunk_size))), 1)
     print num_chunks
 
-    #offset = 0
-    #part_id = 1
     pool = Pool(processes=10)
     for chunk in range(num_chunks):
         offset = chunk * chunk_size

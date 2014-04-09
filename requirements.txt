@@ -1,3 +1,2 @@
-progress
 boto
 filechunkio
