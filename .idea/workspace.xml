@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="53bd9569-d408-4955-89e8-87f70b4021e7" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/assurity_test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/assurity.py" afterPath="$PROJECT_DIR$/assurity.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="assurity.iws" />
@@ -489,7 +487,11 @@
       <created>1397033947692</created>
       <updated>1397033947692</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Clean up code.">
+      <created>1397614566903</created>
+      <updated>1397614566903</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="ToolWindowManager">
