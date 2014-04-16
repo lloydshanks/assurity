@@ -26,16 +26,21 @@ def main():
     #clean up multipart uploads (temporary)
     conn = S3Connection(credentials['aws_access_key_id'], credentials['aws_secret_access_key'])
     # test for exception
-    s3_backups = conn.get_bucket(settings['s3_bucket'])
-    for mpu in s3_backups.get_all_multipart_uploads():
-        mpu.cancel_upload()
-        print 'cancelled'
+    #s3_backups = conn.get_bucket(settings['s3_bucket'])
+    #for mpu in s3_backups.get_all_multipart_uploads():
+    #    mpu.cancel_upload()
+    #    print 'cancelled'
+
+    s3_backups = conn.get_bucket('mecca-database-backup')
+    for mp in s3_backups.get_all_multipart_uploads():
+        print len(mp.get_all_parts())
 
     local_files = get_local_files(settings)
     remote_files = get_remote_files(settings, credentials)
     for filename, details in local_files.items():
         if filename not in remote_files:
-            upload_file(filename, details, settings, credentials)
+            break
+            #upload_file(filename, details, settings, credentials)
 
 
 def progress_line(filename, current, total):
@@ -132,9 +137,12 @@ def upload_file(name, details, settings, credentials):
     pool.join()
 
     if len(mp.get_all_parts()) == num_chunks:
+        print 'Complete' + str(len(mp.get_all_parts())) + str(num_chunks)
         mp.complete_upload()
     else:
+        print 'Not complete' + str(mp.get_all_parts())
         mp.cancel_upload()
+
 
 
 if __name__ == '__main__':
