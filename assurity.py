@@ -116,7 +116,7 @@ def upload_file(name, details, settings, credentials):
 
     size = os.stat(filename).st_size
     print size
-    chunk_size = max(int(math.ceil(size / 999)), 10240)
+    chunk_size = max(int(math.ceil(size / 999)), 10485760)
     print chunk_size
     num_chunks = max(int(math.ceil(size / float(chunk_size))), 1)
     print num_chunks
